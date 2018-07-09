@@ -7,6 +7,10 @@ byte myUnitAddr = 0x05;
 byte siteId[] = {'L', 'O', 'L'};
 byte cryptoKey[] = {'1','6','b','y','t','e','s','S','e','c','r','e','t','K','e','y'};
 
+Node n2 = Node(2);
+Node n3 = Node(3);
+Node nodes[] = { n2, n3 };
+
 void setup() {
   Serial.begin(9600);
   while (!Serial);
@@ -27,36 +31,16 @@ void setup() {
 
   delay(2000);
   
-  LoRaNet.initNode(3);
-}
+  //LoRaNet.initNode(3);
 
-Node gw = Node(0);
+  LoRaNet.initGW(nodes, 2);
+}
 
 void loop() {
   //LoRaNet._send(gw, cryptoKey, 7, siteId, sizeof(siteId));
   //LoRaNet._send(gw, cryptoKey, 7, NULL, 0);
   //delay(2000);
 
-  LoRaNet._recv();
+  LoRaNet.process();
 }
 
-void sendMessage(String outgoing) {
-  LoRa.beginPacket();
-  LoRa.print(outgoing);
-  LoRa.endPacket();
-}
-
-void onReceive(int packetSize) {
-  if (packetSize == 0) return;          // if there's no packet, return
-
-  String incoming = "";
-
-  while (LoRa.available()) {
-    incoming += (char)LoRa.read();
-  }
-
-  Serial.print("<<< ");
-  Serial.print(millis());
-  Serial.print(" ");
-  Serial.println(incoming);
-}

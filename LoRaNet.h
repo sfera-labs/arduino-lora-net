@@ -29,11 +29,9 @@ class LoRaNetClass {
   public:
     LoRaNetClass();
     void begin(byte *siteId, int siteIdLen, byte *cryptoKey);
+    void initGW(Node *nodes, int numOfNodes);
     void initNode(byte unitAddr);
-
-    // TODO move to private
-    bool _send(Node &to, byte *session, byte msg_type, byte *data, int data_len);
-    void _recv();
+    void process();
 
   private:
     AES _aes;
@@ -43,7 +41,11 @@ class LoRaNetClass {
     byte _unit_addr;
     Node *_nodes;
     int _nodes_size;
+    unsigned long _reset_last;
+    long _reset_intvl;
 
+    bool _send(Node &to, byte *session, byte msg_type, byte *data, int data_len);
+    void _recv();
     void _reset();
     void _process_message(Node &sender, byte msg_type, byte *sent_session, uint16_t sent_counter, byte *data, int data_len);
     void _process_reset(Node &sender, byte msg_type, byte *sent_session, uint16_t sent_counter, byte *data, int data_len);

@@ -19,6 +19,8 @@ void LoRaNetClass::begin(byte *siteId, int siteIdLen, byte *cryptoKey) {
   _site_id_len = siteIdLen;
   memcpy(_site_id, siteId, siteIdLen);
   memcpy(_crypto_key, cryptoKey, 16);
+  _reset_last = millis();
+  _reset_intvl = 0;
 
   // init random
   LoRa.parsePacket();
@@ -30,42 +32,74 @@ void LoRaNetClass::begin(byte *siteId, int siteIdLen, byte *cryptoKey) {
   randomSeed(seed);
 }
 
+void LoRaNetClass::initGW(Node *nodes, int numOfNodes) {
+  _unit_addr = 0;
+  _nodes = nodes;
+  _nodes_size = numOfNodes;
+}
+
 void LoRaNetClass::initNode(byte unitAddr) {
   _unit_addr = unitAddr;
   _nodes = _GW_NODES;
   _nodes[0] = Node(0);
   _nodes_size = 1;
+}
+
+void LoRaNetClass::process() {
   _reset();
+  _recv();
 }
 
 void LoRaNetClass::_reset() {
   unsigned long now = millis();
-  for (int i = 0; i < _nodes_size; i++) {
-    Node &node = _nodes[i];
-    if (node._reset_intvl >= 0 && now - node._reset_last >= node._reset_intvl) {
-      Serial.print("_reset ");
-      Serial.println(node.getAddr());
-      node._reset_last = now;
-      node._reset_intvl = node._reset_trial * 5000 + random(5000);
-      if (node._reset_trial < 30) {
-        node._reset_trial++;
+
+  if (now - _reset_last >= _reset_intvl) {
+    _reset_last = now;
+
+    for (int i = 0; i < _nodes_size; i++) {
+      Node &node = _nodes[i];
+      if (node._reset_intvl >= 0 && now - node._reset_last >= node._reset_intvl) {
+        Serial.print("_reset ");
+        Serial.println(node.getAddr());
+        node._reset_last = now;
+        node._reset_intvl = node._reset_trial * 5000 + random(5000);
+        if (node._reset_trial < 30) {
+          node._reset_trial++;
+        }
+
+        _reset_intvl = 5000;
+
+        for (int i = 0; i < 8; i++) {
+          node._reset_session[i] = random(0x100);
+        }
+
+        _send(node, node._reset_session, _MSG_RST_1, NULL, 0);
+        return;
       }
-
-      // TODO self._reset_timeout = Timer.Alarm(self._reset, 5)
-
-      for (int i = 0; i < 8; i++) {
-        node._reset_session[i] = random(0x100);
-      }
-
-      _send(node, node._reset_session, _MSG_RST_1, NULL, 0);
-      return;
     }
-  }
 
-  // TODO Timer.Alarm(self._reset, 2)
+    _reset_intvl = 2000;
+  }
 }
 
 bool LoRaNetClass::_send(Node &to, byte *session, byte msg_type, byte *data, int data_len) {
+  Serial.println("_send ====");
+
+  Serial.print("to: ");
+  Serial.print(to.getAddr());
+  Serial.println();
+
+  Serial.print("msg_type: ");
+  Serial.print(msg_type);
+  Serial.println();
+
+  Serial.print("session: ");
+  for (int i = 0; i < 8; i++) {
+    Serial.print(session[i]);
+    Serial.print(" ");
+  }
+  Serial.println();
+
   if (session[0] == 0) {
     Serial.println("Send error: no session");
     return false;
@@ -209,6 +243,8 @@ void LoRaNetClass::_recv() {
 }
 
 void LoRaNetClass::_process_message(Node &sender, byte msg_type, byte *sent_session, uint16_t sent_counter, byte *data, int data_len) {
+  Serial.println("_process_message ====");
+
   Serial.print("sender: ");
   Serial.print(sender.getAddr());
   Serial.println();
@@ -337,9 +373,8 @@ void LoRaNetClass::_process_reset(Node &sender, byte msg_type, byte *sent_sessio
 
     Serial.println("RST DONE!");
 
-    // TODO
-    // self._reset_timeout.cancel()
-    // Timer.Alarm(self._reset, 1)
+    _reset_last = millis();
+    _reset_intvl = 1000;
 
   } else {
     // TODO remove
