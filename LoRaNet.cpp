@@ -2,19 +2,19 @@
 #include <LoRa.h>
 #include "CRC.h"
 
+/*******************************************************************************
+/** Network layer
+/******************************************************************************/
+
 #define _MSG_RST_1 0
 #define _MSG_RST_2 1
 #define _MSG_RST_3 2
 #define _MSG_RST_4 3
-#define _MSG_UPD 10
-#define _MSG_CMD 11
-
-Node _GW_NODES[1];
 
 LoRaNetClass::LoRaNetClass() {
 }
 
-void LoRaNetClass::begin(byte *siteId, int siteIdLen, byte *cryptoKey) {
+void LoRaNetClass::init(byte *siteId, int siteIdLen, byte *cryptoKey) {
   _site_id = (byte*) malloc(siteIdLen);
   _site_id_len = siteIdLen;
   memcpy(_site_id, siteId, siteIdLen);
@@ -32,6 +32,7 @@ void LoRaNetClass::begin(byte *siteId, int siteIdLen, byte *cryptoKey) {
   randomSeed(seed);
 }
 
+/* TODO remove
 void LoRaNetClass::initGW(Node *nodes, int numOfNodes) {
   _unit_addr = 0;
   _nodes = nodes;
@@ -43,6 +44,16 @@ void LoRaNetClass::initNode(byte unitAddr) {
   _nodes = _GW_NODES;
   _nodes[0] = Node(0);
   _nodes_size = 1;
+}
+*/
+
+void LoRaNetClass::setLocalAddr(int address) {
+  _unit_addr = address;
+}
+
+void LoRaNetClass::setNodes(Node *nodes, int numOfNodes) {
+  _nodes = nodes;
+  _nodes_size = numOfNodes;
 }
 
 void LoRaNetClass::process() {
@@ -73,7 +84,7 @@ void LoRaNetClass::_reset() {
           node._reset_session[i] = random(0x100);
         }
 
-        _send(node, node._reset_session, _MSG_RST_1, NULL, 0);
+        _send_with_session(node, node._reset_session, _MSG_RST_1, NULL, 0);
         return;
       }
     }
@@ -82,7 +93,11 @@ void LoRaNetClass::_reset() {
   }
 }
 
-bool LoRaNetClass::_send(Node &to, byte *session, byte msg_type, byte *data, int data_len) {
+bool LoRaNetClass::_send(Node &to, byte msg_type, byte *data, int data_len) {
+  return _send_with_session(to, to._session, msg_type, data, data_len);
+}
+
+bool LoRaNetClass::_send_with_session(Node &to, byte *session, byte msg_type, byte *data, int data_len) {
   Serial.println("_send ====");
 
   Serial.print("to: ");
@@ -204,11 +219,6 @@ void LoRaNetClass::_recv() {
     return;
   }
 
-  if (from_addr != 0 && to_addr != 0) {
-    Serial.println("Error: node to node");
-    return;
-  }
-
   byte msg_type = plain[2];
   byte sent_session[8];
   memcpy(sent_session, plain + 3, 8);
@@ -273,23 +283,14 @@ void LoRaNetClass::_process_message(Node &sender, byte msg_type, byte *sent_sess
   }
   Serial.println();
 
-  if (memcmp(sender._session, sent_session, 8) == 0) {
-    if (sender._counter_recv < sent_counter) {
+  if (msg_type <= _MSG_RST_4) {
+    _process_reset(sender, msg_type, sent_session, sent_counter, data, data_len);
 
-      if (msg_type == _MSG_UPD) {
-        sender._counter_recv = sent_counter;
-        Serial.println("** GOT UPDATE **");
-        return;
-
-      } else if (msg_type == _MSG_CMD) {
-        sender._counter_recv = sent_counter;
-        Serial.println("** GOT COMMAND **");
-        return;
-      }
-    }
+  } else if (memcmp(sender._session, sent_session, 8) == 0
+              && sender._counter_recv < sent_counter) {
+    sender._counter_recv = sent_counter;
+    sender._process_message(msg_type, data, data_len);
   }
-
-  _process_reset(sender, msg_type, sent_session, sent_counter, data, data_len);
 }
 
 void LoRaNetClass::_process_reset(Node &sender, byte msg_type, byte *sent_session, uint16_t sent_counter, byte *data, int data_len) {
@@ -303,8 +304,10 @@ void LoRaNetClass::_process_reset(Node &sender, byte msg_type, byte *sent_sessio
     byte counter_challenge_bytes[2];
     counter_challenge_bytes[0] = (byte) ((counter_challenge >> 8) & 0xff);
     counter_challenge_bytes[1] = (byte) (counter_challenge & 0xff);
+
     memcpy(sender._reset_session, sent_session, 8);
-    _send(sender, sender._reset_session, _MSG_RST_2, counter_challenge_bytes, 2);
+
+    _send_with_session(sender, sender._reset_session, _MSG_RST_2, counter_challenge_bytes, 2);
 
   } else if (msg_type == _MSG_RST_2) {
     Serial.println("RST 2");
@@ -322,7 +325,7 @@ void LoRaNetClass::_process_reset(Node &sender, byte msg_type, byte *sent_sessio
     uint16_t counter_challenge = ((data[0] & 0xff) << 8) + (data[1] & 0xff);
     sender._counter_send = counter_challenge;
 
-    _send(sender, sender._reset_session, _MSG_RST_3, NULL, 0);
+    _send_with_session(sender, sender._reset_session, _MSG_RST_3, NULL, 0);
 
     memcpy(sender._session, sender._reset_session, 8);
     sender._counter_recv = sent_counter;
@@ -345,13 +348,15 @@ void LoRaNetClass::_process_reset(Node &sender, byte msg_type, byte *sent_sessio
       return;
     }
 
-    _send(sender, sender._reset_session, _MSG_RST_4, NULL, 0);
+    _send_with_session(sender, sender._reset_session, _MSG_RST_4, NULL, 0);
 
     memcpy(sender._session, sender._reset_session, 8);
     sender._counter_recv = sent_counter;
 
-    memset (sender._reset_session, 0, 8);
+    memset(sender._reset_session, 0, 8);
     sender._reset_intvl = -1;
+
+    sender._on_session_reset();
 
     Serial.println("RST DONE!");
 
@@ -368,17 +373,17 @@ void LoRaNetClass::_process_reset(Node &sender, byte msg_type, byte *sent_sessio
       return;
     }
 
-    memset (sender._reset_session, 0, 8);
+    sender._counter_recv = sent_counter;
+
+    memset(sender._reset_session, 0, 8);
     sender._reset_intvl = -1;
+
+    sender._on_session_reset();
 
     Serial.println("RST DONE!");
 
     _reset_last = millis();
     _reset_intvl = 1000;
-
-  } else {
-    // TODO remove
-    Serial.println("Discarded message");
   }
 }
 

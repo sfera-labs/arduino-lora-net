@@ -4,12 +4,15 @@
 #include <Arduino.h>
 #include "AES.h"
 
+/*******************************************************************************
+/** Network layer
+/******************************************************************************/
+
 class Node {
   public:
     Node();
     Node(byte unitAddr);
 
-    unsigned long _last_update;
     byte _session[8];
     uint16_t _counter_send;
     uint16_t _counter_recv;
@@ -19,19 +22,20 @@ class Node {
     byte _reset_session[8];
 
     byte getAddr();
+    virtual void _on_session_reset() = 0;
+    virtual void _process_message(byte msg_type, byte *data, int data_len) = 0;
 
   private:
     byte _unit_addr;
-
 };
 
 class LoRaNetClass {
   public:
     LoRaNetClass();
-    void begin(byte *siteId, int siteIdLen, byte *cryptoKey);
-    void initGW(Node *nodes, int numOfNodes);
-    void initNode(byte unitAddr);
+    void init(byte *siteId, int siteIdLen, byte *cryptoKey);
     void process();
+    void setLocalAddr(int address);
+    void setNodes(Node *nodes, int numOfNodes);
 
   private:
     AES _aes;
@@ -44,7 +48,8 @@ class LoRaNetClass {
     unsigned long _reset_last;
     long _reset_intvl;
 
-    bool _send(Node &to, byte *session, byte msg_type, byte *data, int data_len);
+    bool _send(Node &to, byte msg_type, byte *data, int data_len);
+    bool _send_with_session(Node &to, byte *session, byte msg_type, byte *data, int data_len);
     void _recv();
     void _reset();
     void _process_message(Node &sender, byte msg_type, byte *sent_session, uint16_t sent_counter, byte *data, int data_len);
@@ -52,5 +57,75 @@ class LoRaNetClass {
 };
 
 extern LoRaNetClass LoRaNet;
+
+/*******************************************************************************
+/** Master-Slave layer
+/******************************************************************************/
+
+class LocalUnit {
+  public:
+    LocalUnit(byte unitAddr);
+    void process();
+};
+
+class RemoteUnit : public Node {
+  public:
+    RemoteUnit(byte unitAddr);
+};
+
+/**** Master side ****/
+
+class Master : public LocalUnit {
+
+};
+
+class RemoteSlave : public RemoteUnit {
+
+};
+
+class RemoteOutput {
+
+};
+
+class RemoteInput {
+
+};
+
+/**** Slave side ****/
+
+class RemoteMaster;
+
+class LocalSlave : public LocalUnit {
+  private:
+    // RemoteMaster *_master;
+
+  public:
+    LocalSlave(byte unitAddr);
+    void process();
+};
+
+class RemoteMaster : public RemoteUnit {
+  private:
+    LocalSlave *_local_slave;
+
+  public:
+    RemoteMaster();
+    void _on_session_reset();
+    void _process_message(byte msg_type, byte *data, int data_len);
+    void _set_local_slave(LocalSlave *local_slave);
+};
+
+/*******************************************************************************
+/** Iono layer
+/******************************************************************************/
+
+class IonoRemoteSlave : public RemoteSlave {
+
+};
+
+class IonoLocalSlave : public LocalSlave {
+  public:
+    IonoLocalSlave(byte unitAddr);
+};
 
 #endif
