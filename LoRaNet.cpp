@@ -110,7 +110,7 @@ bool LoRaNetClass::_send_with_session(Node &to, byte *session, byte msg_type, by
 
   Serial.print("session: ");
   for (int i = 0; i < 8; i++) {
-    Serial.print(session[i]);
+    Serial.print(session[i], HEX);
     Serial.print(" ");
   }
   Serial.println();
@@ -196,7 +196,7 @@ void LoRaNetClass::_recv() {
 
   Serial.println("========");
   for (int i = 0; i < cipher_len; i++) {
-    Serial.print(plain[i]);
+    Serial.print(plain[i], HEX);
     Serial.print("(");
     Serial.print((char) plain[i]);
     Serial.print(") ");
@@ -265,7 +265,7 @@ void LoRaNetClass::_process_message(Node &sender, byte msg_type, byte *sent_sess
 
   Serial.print("sent_session: ");
   for (int i = 0; i < 8; i++) {
-    Serial.print(sent_session[i]);
+    Serial.print(sent_session[i], HEX);
     Serial.print(" ");
   }
   Serial.println();
@@ -276,7 +276,7 @@ void LoRaNetClass::_process_message(Node &sender, byte msg_type, byte *sent_sess
 
   Serial.print("data: ");
   for (int i = 0; i < data_len; i++) {
-    Serial.print(data[i]);
+    Serial.print(data[i], HEX);
     Serial.print("(");
     Serial.print((char) data[i]);
     Serial.print(") ");

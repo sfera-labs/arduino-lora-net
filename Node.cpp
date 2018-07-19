@@ -16,3 +16,7 @@ Node::Node(byte unitAddr) {
 byte Node::getAddr() {
   return _unit_addr;
 }
+
+void Node::send(byte msg_type, byte *data, int data_len) {
+  LoRaNet._send(*this, msg_type, data, data_len);
+}

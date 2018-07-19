@@ -1,18 +1,27 @@
 #include "LoRaNet.h"
 
-RemoteMaster _MASTER = RemoteMaster();
 RemoteMaster _MASTER_ARRAY[1];
 
 LocalSlave::LocalSlave(byte unitAddr)
 : LocalUnit(unitAddr) {
-  _MASTER_ARRAY[0] = _MASTER;
-  _MASTER._set_local_slave(this);
-  //_master = &RemoteMaster(this);
-  //_MASTER_NODE[0] = _master;
+  _MASTER_ARRAY[0] = RemoteMaster();
+  _MASTER_ARRAY[0]._set_local_slave(this);
   LoRaNet.setNodes(_MASTER_ARRAY, 1);
 }
 
 void LocalSlave::process() {
   LocalUnit::process();
-  // TODO monitor IOs
+  _process_ios();
+  if (_has_updates()) {
+    Serial.println("LocalSlave._monitor update");
+    _send_update();
+  }
+  if (_MASTER_ARRAY[0]._needs_repetition_or_heartbeat()) {
+    Serial.println("LocalSlave._monitor repeat");
+    _send_update();
+  }
+}
+
+void LocalSlave::_send_update() {
+  _MASTER_ARRAY[0]._send_update(_get_state_data(), _get_state_data_len());
 }
