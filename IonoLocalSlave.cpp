@@ -33,6 +33,32 @@ int IonoLocalSlave::_get_state_data_len() {
   return 13;
 }
 
+void IonoLocalSlave::_set_state(byte *data) {
+  byte mask = data[0];
+  byte dos = data[1];
+  uint16_t ao1 = ((data[2] & 0xff) << 8) | (data[3] & 0xff);
+
+  if ((mask >> 4) & 1 == 1) {
+    Iono.write(DO1, (dos >> 3) & 1);
+  }
+
+  if ((mask >> 3) & 1 == 1) {
+    Iono.write(DO2, (dos >> 2) & 1);
+  }
+
+  if ((mask >> 2) & 1 == 1) {
+    Iono.write(DO3, (dos >> 1) & 1);
+  }
+
+  if ((mask >> 1) & 1 == 1) {
+    Iono.write(DO4, dos & 1);
+  }
+
+  if (mask & 1 == 1) {
+    Iono.write(AO1, ao1 / 1000.0);
+  }
+}
+
 byte* IonoLocalSlave::_get_state_data() {
   _state_changed = false;
   _state_data[0] = _state_modes;

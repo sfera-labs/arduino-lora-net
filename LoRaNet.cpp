@@ -32,21 +32,6 @@ void LoRaNetClass::init(byte *siteId, int siteIdLen, byte *cryptoKey) {
   randomSeed(seed);
 }
 
-/* TODO remove
-void LoRaNetClass::initGW(Node *nodes, int numOfNodes) {
-  _unit_addr = 0;
-  _nodes = nodes;
-  _nodes_size = numOfNodes;
-}
-
-void LoRaNetClass::initNode(byte unitAddr) {
-  _unit_addr = unitAddr;
-  _nodes = _GW_NODES;
-  _nodes[0] = Node(0);
-  _nodes_size = 1;
-}
-*/
-
 void LoRaNetClass::setLocalAddr(int address) {
   _unit_addr = address;
 }

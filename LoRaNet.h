@@ -81,11 +81,24 @@ class RemoteUnit : public Node {
 
 /**** Master side ****/
 
-class Master : public LocalUnit {
+// TODO
+
+class RemoteSlave : public RemoteUnit {
+  public:
+    RemoteSlave(byte unitAddr);
+
+  private:
+    void _on_session_reset();
+    void _send_cmd();
+    void _process_message(byte msg_type, byte *data, int data_len);
 
 };
 
-class RemoteSlave : public RemoteUnit {
+class Master : public LocalUnit {
+  public:
+    Master();
+    void setSlaves(RemoteSlave *slaves, int numOfSlaves);
+    void process();
 
 };
 
@@ -103,7 +116,6 @@ class RemoteMaster;
 
 class LocalSlave : public LocalUnit {
   private:
-    // RemoteMaster *_master; TODO remove?
     void _send_update();
     virtual bool _has_updates() = 0;
     virtual byte* _get_state_data() = 0;
@@ -113,6 +125,7 @@ class LocalSlave : public LocalUnit {
     LocalSlave(byte unitAddr);
     void process();
     virtual int _get_state_data_len() = 0;
+    virtual void _set_state(byte *data) = 0;
 };
 
 class RemoteMaster : public RemoteUnit {
@@ -136,7 +149,13 @@ class RemoteMaster : public RemoteUnit {
 /******************************************************************************/
 
 class IonoRemoteSlave : public RemoteSlave {
+  public:
+    IonoRemoteSlave(byte unitAddr);
 
+  private:
+
+
+  // TODO
 };
 
 class IonoLocalSlave : public LocalSlave {
@@ -162,6 +181,7 @@ class IonoLocalSlave : public LocalSlave {
   public:
     IonoLocalSlave(byte unitAddr);
     static void subscribeCallback(uint8_t pin, float value);
+    void _set_state(byte *data);
 };
 
 #endif

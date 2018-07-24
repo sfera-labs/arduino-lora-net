@@ -1,5 +1,7 @@
 #include "LoRaNet.h"
 
+#define _HEARTBEAT_DELAY 60000
+
 RemoteMaster::RemoteMaster()
 : RemoteUnit(0) {
 }
@@ -16,27 +18,8 @@ void RemoteMaster::_on_session_reset() {
   }
   Serial.println();
 
-  // TODO
-}
-
-void RemoteMaster::_process_message(byte msg_type, byte *data, int data_len) {
-  if (msg_type == _MSG_ACK) {
-    Serial.println("RemoteMaster::_process_message ACK");
-    memcpy(_last_update_ack, data, data_len);
-  }
-
-  /*
-  TODO
-  elif msg_type == _MSG_CMD:
-            print("RemoteMaster._process_message CMD")
-            self._local_slave._set_state(data)
-  */
-}
-
-bool RemoteMaster::_needs_repetition_or_heartbeat() {
-  return (memcmp(_last_update_ack, _last_update_data, _local_slave->_get_state_data_len()) != 0
-      && (millis() - _last_update_ts) >= 5000)
-      || (millis() - _last_update_ts) >= 60000;
+  // trigger an update within a second from now
+  _last_update_ts = millis() - (_HEARTBEAT_DELAY - 1000);
 }
 
 void RemoteMaster::_send_update(byte *data, int data_len) {
@@ -50,8 +33,22 @@ void RemoteMaster::_send_update(byte *data, int data_len) {
   _last_update_data = data;
   _last_update_ts = millis();
 
-  // TODO remove LoRaNet._send_with_session(*this, _session, _MSG_UPD, data, data_len);
-
-
   send(_MSG_UPD, data, data_len);
+}
+
+void RemoteMaster::_process_message(byte msg_type, byte *data, int data_len) {
+  if (msg_type == _MSG_ACK) {
+    Serial.println("RemoteMaster::_process_message ACK");
+    memcpy(_last_update_ack, data, data_len);
+
+  } else if (msg_type == _MSG_CMD) {
+    Serial.println("RemoteMaster::_process_message CMD");
+    _local_slave->_set_state(data);
+  }
+}
+
+bool RemoteMaster::_needs_repetition_or_heartbeat() {
+  return (memcmp(_last_update_ack, _last_update_data, _local_slave->_get_state_data_len()) != 0
+      && (millis() - _last_update_ts) >= 5000)
+      || (millis() - _last_update_ts) >= _HEARTBEAT_DELAY;
 }
