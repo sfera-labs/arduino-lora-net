@@ -43,7 +43,7 @@ void RemoteMaster::_process_message(byte msg_type, byte *data, int data_len) {
 
   } else if (msg_type == _MSG_CMD) {
     Serial.println("RemoteMaster::_process_message CMD");
-    _local_slave->_set_state(data);
+    _local_slave->_set_state(data, data_len);
   }
 }
 

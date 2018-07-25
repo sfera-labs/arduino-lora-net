@@ -6,9 +6,13 @@ Master::Master()
 
 void Master::setSlaves(RemoteSlave *slaves, int numOfSlaves) {
   LoRaNet.setNodes(slaves, numOfSlaves);
+  _slaves = slaves;
+  _num_of_slaves = numOfSlaves;
 }
 
 void Master::process() {
   LocalUnit::process();
-  // TODO
+  for (int i = 0; i < _num_of_slaves; i++) {
+    _slaves[i].process();
+  }
 }

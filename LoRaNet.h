@@ -81,33 +81,32 @@ class RemoteUnit : public Node {
 
 /**** Master side ****/
 
-// TODO
-
 class RemoteSlave : public RemoteUnit {
+  private:
+    unsigned long _last_update_ts;
+    unsigned long _last_cmd_ts;
+    virtual byte* _get_cmd_data() = 0;
+    virtual int _get_cmd_data_len() = 0;
+    virtual void _update_state(byte *data, int data_len) = 0;
+    virtual bool _check_cmd_success() = 0;
+
   public:
     RemoteSlave(byte unitAddr);
-
-  private:
+    void process();
     void _on_session_reset();
     void _send_cmd();
     void _process_message(byte msg_type, byte *data, int data_len);
-
 };
 
 class Master : public LocalUnit {
+  private:
+    RemoteSlave *_slaves;
+    int _num_of_slaves;
+
   public:
     Master();
     void setSlaves(RemoteSlave *slaves, int numOfSlaves);
     void process();
-
-};
-
-class RemoteOutput {
-
-};
-
-class RemoteInput {
-
 };
 
 /**** Slave side ****/
@@ -125,7 +124,7 @@ class LocalSlave : public LocalUnit {
     LocalSlave(byte unitAddr);
     void process();
     virtual int _get_state_data_len() = 0;
-    virtual void _set_state(byte *data) = 0;
+    virtual void _set_state(byte *data, int data_len) = 0;
 };
 
 class RemoteMaster : public RemoteUnit {
@@ -149,13 +148,23 @@ class RemoteMaster : public RemoteUnit {
 /******************************************************************************/
 
 class IonoRemoteSlave : public RemoteSlave {
+  private:
+    byte _cmd_mask;
+    byte _cmd_dos;
+    uint16_t _cmd_ao1;
+    byte _cmd_data[4];
+    float _cmd_values[5];
+    float _values[21];
+
+    byte* _get_cmd_data();
+    int _get_cmd_data_len();
+    bool _check_cmd_success();
+
   public:
     IonoRemoteSlave(byte unitAddr);
-
-  private:
-
-
-  // TODO
+    void write(int pin, float value);
+    float read(int pin);
+    void _update_state(byte *data, int data_len);
 };
 
 class IonoLocalSlave : public LocalSlave {
@@ -181,7 +190,7 @@ class IonoLocalSlave : public LocalSlave {
   public:
     IonoLocalSlave(byte unitAddr);
     static void subscribeCallback(uint8_t pin, float value);
-    void _set_state(byte *data);
+    void _set_state(byte *data, int data_len);
 };
 
 #endif

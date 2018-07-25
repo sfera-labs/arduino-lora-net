@@ -33,7 +33,7 @@ int IonoLocalSlave::_get_state_data_len() {
   return 13;
 }
 
-void IonoLocalSlave::_set_state(byte *data) {
+void IonoLocalSlave::_set_state(byte *data, int data_len) {
   byte mask = data[0];
   byte dos = data[1];
   uint16_t ao1 = ((data[2] & 0xff) << 8) | (data[3] & 0xff);
