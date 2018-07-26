@@ -66,12 +66,12 @@ void loop() {
     Serial.print("AI4 ");
     Serial.println(iono2.read(AI4));
 
-    /* TODO
-    Serial.print("STATS ");
-    Serial.println(iono2.loraStats());
+    Serial.print("RSSI ");
+    Serial.println(iono2.loraRssi());
+    Serial.print("SNR ");
+    Serial.println(iono2.loraSnr());
     Serial.print("AGE ");
     Serial.println(iono2.stateAge());
-    */
     
     do1 = (do1 + 1) % 2;
     iono2.write(DO1, do1);

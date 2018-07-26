@@ -9,6 +9,9 @@
 /******************************************************************************/
 
 class Node {
+  private:
+    byte _unit_addr;
+
   public:
     Node();
     Node(byte unitAddr);
@@ -20,15 +23,15 @@ class Node {
     unsigned long _reset_last;
     long _reset_intvl;
     byte _reset_session[8];
+    int _lora_rssi;
+    float _lora_snr;
 
     byte getAddr();
     void send(byte msg_type, byte *data, int data_len);
+    int loraRssi();
+    float loraSnr();
     virtual void _on_session_reset() = 0;
     virtual void _process_message(byte msg_type, byte *data, int data_len) = 0;
-
-  private:
-    byte _unit_addr;
-
 };
 
 class LoRaNetClass {
@@ -83,6 +86,7 @@ class RemoteUnit : public Node {
 
 class RemoteSlave : public RemoteUnit {
   private:
+    bool _last_update_ts_valid;
     unsigned long _last_update_ts;
     unsigned long _last_cmd_ts;
     void _send_cmd();
@@ -95,6 +99,7 @@ class RemoteSlave : public RemoteUnit {
   public:
     RemoteSlave(byte unitAddr);
     void process();
+    unsigned int stateAge();
     void _on_session_reset();
     void _process_message(byte msg_type, byte *data, int data_len);
 };

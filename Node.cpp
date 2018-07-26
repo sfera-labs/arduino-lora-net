@@ -20,3 +20,11 @@ byte Node::getAddr() {
 void Node::send(byte msg_type, byte *data, int data_len) {
   LoRaNet._send(*this, msg_type, data, data_len);
 }
+
+int Node::loraRssi() {
+  return _lora_rssi;
+}
+
+float Node::loraSnr() {
+  return _lora_snr;
+}

@@ -232,6 +232,8 @@ void LoRaNetClass::_recv() {
       }
     }
     if (sender != NULL) {
+      sender->_lora_rssi = LoRa.packetRssi();
+      sender->_lora_snr = LoRa.packetSnr();
       _process_message(*sender, msg_type, sent_session, sent_counter, data, data_len);
     }
   }

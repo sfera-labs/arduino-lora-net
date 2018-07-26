@@ -4,6 +4,7 @@
 
 RemoteSlave::RemoteSlave(byte unitAddr)
 : RemoteUnit(unitAddr) {
+  _last_update_ts_valid = false;
 }
 
 void RemoteSlave::_on_session_reset() {
@@ -19,10 +20,18 @@ void RemoteSlave::_process_message(byte msg_type, byte *data, int data_len) {
   if (msg_type == _MSG_UPD) {
     Serial.println("RemoteSlave::_process_message UPD");
     _last_update_ts = millis();
+    _last_update_ts_valid = true;
     _update_state(data, data_len);
     send(_MSG_ACK, data, data_len); // send ack
     _last_cmd_ts = millis() - (_CMD_REPEAT_DELAY - 300);
   }
+}
+
+unsigned int RemoteSlave::stateAge() {
+  if (_last_update_ts_valid) {
+    return (millis() - _last_update_ts) / 1000;
+  }
+  return (unsigned int) -1;
 }
 
 void RemoteSlave::process() {
