@@ -85,6 +85,8 @@ class RemoteSlave : public RemoteUnit {
   private:
     unsigned long _last_update_ts;
     unsigned long _last_cmd_ts;
+    void _send_cmd();
+    virtual bool _has_cmds() = 0;
     virtual byte* _get_cmd_data() = 0;
     virtual int _get_cmd_data_len() = 0;
     virtual void _update_state(byte *data, int data_len) = 0;
@@ -94,7 +96,6 @@ class RemoteSlave : public RemoteUnit {
     RemoteSlave(byte unitAddr);
     void process();
     void _on_session_reset();
-    void _send_cmd();
     void _process_message(byte msg_type, byte *data, int data_len);
 };
 
@@ -149,6 +150,7 @@ class RemoteMaster : public RemoteUnit {
 
 class IonoRemoteSlave : public RemoteSlave {
   private:
+    bool _cmd_changed;
     byte _cmd_mask;
     byte _cmd_dos;
     uint16_t _cmd_ao1;
@@ -156,6 +158,7 @@ class IonoRemoteSlave : public RemoteSlave {
     float _cmd_values[5];
     float _values[21];
 
+    bool _has_cmds();
     byte* _get_cmd_data();
     int _get_cmd_data_len();
     bool _check_cmd_success();

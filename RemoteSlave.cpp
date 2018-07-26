@@ -26,8 +26,13 @@ void RemoteSlave::_process_message(byte msg_type, byte *data, int data_len) {
 }
 
 void RemoteSlave::process() {
+  if (_has_cmds()) {
+    Serial.println("RemoteSlave::process cmd");
+    _send_cmd();
+  }
   if (!_check_cmd_success()) {
     if ((millis() - _last_cmd_ts) >= _CMD_REPEAT_DELAY) {
+      Serial.println("RemoteSlave::process repeat");
       _send_cmd();
     }
   }

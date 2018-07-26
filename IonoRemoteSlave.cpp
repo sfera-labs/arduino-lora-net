@@ -10,6 +10,8 @@ IonoRemoteSlave::IonoRemoteSlave(byte unitAddr)
   for (int i = 0; i < 5; i++) {
     _cmd_values[i] = -1;
   }
+
+  _cmd_changed = false;
 }
 
 bool IonoRemoteSlave::_check_cmd_success() {
@@ -131,7 +133,12 @@ void IonoRemoteSlave::_update_state(byte *data, int data_len) {
   }
 }
 
+bool IonoRemoteSlave::_has_cmds() {
+  return _cmd_changed;
+}
+
 byte* IonoRemoteSlave::_get_cmd_data() {
+  _cmd_changed = false;
   _cmd_data[0] = _cmd_mask;
   _cmd_data[1] = _cmd_dos;
   _cmd_data[2] = (byte) ((_cmd_ao1 >> 8) & 0xff);
@@ -196,7 +203,7 @@ void IonoRemoteSlave::write(int pin, float value) {
   }
 
   _cmd_values[idx] = value;
-  _send_cmd();
+  _cmd_changed = true;
 }
 
 float IonoRemoteSlave::read(int pin) {

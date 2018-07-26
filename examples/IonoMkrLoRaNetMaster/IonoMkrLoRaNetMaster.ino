@@ -37,7 +37,7 @@ int do1 = 0;
 void loop() {
   master.process();
   
-  if (millis() - ts >= 5000) {
+  if (millis() - ts >= 1000) {
     Serial.println("---------");
     Serial.print("DO1 ");
     Serial.println(iono2.read(DO1));
@@ -74,7 +74,7 @@ void loop() {
     */
     
     do1 = (do1 + 1) % 2;
-    //iono2.write(DO1, do1);
+    iono2.write(DO1, do1);
     iono2.write(AO1, do1 * 5);
     
     ts = millis();

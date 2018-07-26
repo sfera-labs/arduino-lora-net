@@ -13,11 +13,11 @@ void LocalSlave::process() {
   LocalUnit::process();
   _process_ios();
   if (_has_updates()) {
-    Serial.println("LocalSlave._monitor update");
+    Serial.println("LocalSlave::process update");
     _send_update();
   }
   if (_MASTER_ARRAY[0]._needs_repetition_or_heartbeat()) {
-    Serial.println("LocalSlave._monitor repeat");
+    Serial.println("LocalSlave::process repeat");
     _send_update();
   }
 }
