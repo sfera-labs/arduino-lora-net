@@ -5,7 +5,7 @@ Node::Node() {
 
 Node::Node(byte unitAddr) {
   _unit_addr = unitAddr;
-  _session[0] = 0;
+  _session_set = false;
   _counter_send = 0;
   _counter_recv = -1;
   _reset_trial = 0;

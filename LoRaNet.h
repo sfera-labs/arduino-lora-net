@@ -17,6 +17,7 @@ class Node {
     Node(byte unitAddr);
 
     byte _session[8];
+    bool _session_set;
     uint16_t _counter_send;
     uint16_t _counter_recv;
     uint16_t _reset_trial;

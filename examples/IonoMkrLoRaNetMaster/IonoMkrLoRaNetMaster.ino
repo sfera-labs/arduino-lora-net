@@ -3,8 +3,10 @@
 #include <LoRaNet.h>
 #include <Iono.h>
 
-byte siteId[] = {'L', 'O', 'L'};
-byte cryptoKey[] = {'1','6','b','y','t','e','s','S','e','c','r','e','t','K','e','y'};
+//byte siteId[] = {'L', 'O', 'L'};
+//byte cryptoKey[] = {'1','6','b','y','t','e','s','S','e','c','r','e','t','K','e','y'};
+byte siteId[] = "LOL";
+byte cryptoKey[] = "16bytesSecretKey";
 
 IonoRemoteSlave iono2 = IonoRemoteSlave(2);
 IonoRemoteSlave *slaves[] = { &iono2 };
@@ -24,7 +26,7 @@ void setup() {
   LoRa.enableCrc();
   LoRa.setSyncWord(0x34);
 
-  LoRaNet.init(siteId, sizeof(siteId), cryptoKey);
+  LoRaNet.init(siteId, sizeof(siteId) - 1, cryptoKey);
 
   master.setSlaves(*slaves, 1);
 

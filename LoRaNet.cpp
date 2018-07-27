@@ -79,6 +79,10 @@ void LoRaNetClass::_reset() {
 }
 
 bool LoRaNetClass::_send(Node &to, byte msg_type, byte *data, int data_len) {
+  if (!to._session_set) {
+    Serial.println("Send error: no session");
+    return false;
+  }
   return _send_with_session(to, to._session, msg_type, data, data_len);
 }
 
@@ -100,10 +104,6 @@ bool LoRaNetClass::_send_with_session(Node &to, byte *session, byte msg_type, by
   }
   Serial.println();
 
-  if (session[0] == 0) {
-    Serial.println("Send error: no session");
-    return false;
-  }
   int plain_len = data_len + 16;
   byte plain[plain_len];
   plain[0] = to.getAddr();
@@ -315,6 +315,7 @@ void LoRaNetClass::_process_reset(Node &sender, byte msg_type, byte *sent_sessio
     _send_with_session(sender, sender._reset_session, _MSG_RST_3, NULL, 0);
 
     memcpy(sender._session, sender._reset_session, 8);
+    sender._session_set = true;
     sender._counter_recv = sent_counter;
 
   } else if (msg_type == _MSG_RST_3) {
@@ -338,6 +339,7 @@ void LoRaNetClass::_process_reset(Node &sender, byte msg_type, byte *sent_sessio
     _send_with_session(sender, sender._reset_session, _MSG_RST_4, NULL, 0);
 
     memcpy(sender._session, sender._reset_session, 8);
+    sender._session_set = true;
     sender._counter_recv = sent_counter;
 
     memset(sender._reset_session, 0, 8);
