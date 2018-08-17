@@ -1,3 +1,15 @@
+/*
+  CRC.cpp - Helper file for Modbus RTU CRC calculation
+
+    Copyright (C) 2018 Sfera Labs S.r.l. - All rights reserved.
+
+  This code is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Lesser General Public
+  License as published by the Free Software Foundation; either
+  version 2.1 of the License, or (at your option) any later version.
+  See file LICENSE.txt for further informations on licensing terms.
+*/
+
 #ifndef CRC_h
 #define CRC_h
 
@@ -45,7 +57,7 @@ static const byte auchCRCLo[] = {
 
 class CRCClass {
   public:
-    static void crc16(byte *data, byte length, byte *crc);
+    static inline void crc16(byte *data, byte length, byte *crc);
 };
 
 void CRCClass::crc16(byte *data, byte length, byte *crc) {
