@@ -2,6 +2,10 @@
 
 #define _CMD_REPEAT_DELAY 5000
 
+RemoteSlave::RemoteSlave()
+: RemoteUnit() {
+}
+
 RemoteSlave::RemoteSlave(byte unitAddr)
 : RemoteUnit(unitAddr) {
   _last_update_ts_valid = false;
@@ -35,6 +39,9 @@ unsigned int RemoteSlave::stateAge() {
 }
 
 void RemoteSlave::process() {
+  if (getAddr() == 0xff) {
+    return;
+  }
   if (_has_cmds()) {
     Serial.println("RemoteSlave::process cmd");
     _send_cmd();

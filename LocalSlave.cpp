@@ -2,6 +2,10 @@
 
 RemoteMaster _MASTER_ARRAY[1];
 
+LocalSlave::LocalSlave()
+: LocalUnit() {
+}
+
 LocalSlave::LocalSlave(byte unitAddr)
 : LocalUnit(unitAddr) {
   _MASTER_ARRAY[0] = RemoteMaster();

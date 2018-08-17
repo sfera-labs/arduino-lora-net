@@ -12,6 +12,7 @@
 #define _MSG_RST_4 3
 
 LoRaNetClass::LoRaNetClass() {
+  _unit_addr = 0xff;
 }
 
 void LoRaNetClass::init(byte *siteId, int siteIdLen, byte *cryptoKey) {
@@ -54,7 +55,9 @@ void LoRaNetClass::_reset() {
 
     for (int i = 0; i < _nodes_size; i++) {
       Node &node = _nodes[i];
-      if (node._reset_intvl >= 0 && now - node._reset_last >= node._reset_intvl) {
+      if (node.getAddr() != 0xff &&
+          node._reset_intvl >= 0 &&
+          now - node._reset_last >= node._reset_intvl) {
         Serial.print("_reset ");
         Serial.println(node.getAddr());
         node._reset_last = now;
@@ -103,6 +106,11 @@ bool LoRaNetClass::_send_with_session(Node &to, byte *session, byte msg_type, by
     Serial.print(" ");
   }
   Serial.println();
+
+  if (to.getAddr() == 0xff) {
+    Serial.println("Send error: to == 0xff");
+    return false;
+  }
 
   int plain_len = data_len + 16;
   byte plain[plain_len];
@@ -199,7 +207,17 @@ void LoRaNetClass::_recv() {
   Serial.print(from_addr);
   Serial.println();
 
-  if (to_addr == from_addr) {
+  if (from_addr == (byte) 0xff) {
+    Serial.println("Error: from == 0xff");
+    return;
+  }
+
+  if (to_addr == (byte) 0xff) {
+    Serial.println("Error: to == 0xff");
+    return;
+  }
+
+  if (from_addr == to_addr) {
     Serial.println("Error: from == to");
     return;
   }

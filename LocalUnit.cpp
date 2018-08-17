@@ -1,5 +1,8 @@
 #include "LoRaNet.h"
 
+LocalUnit::LocalUnit() {
+}
+
 LocalUnit::LocalUnit(byte unitAddr) {
   LoRaNet.setLocalAddr(unitAddr);
 }

@@ -74,12 +74,14 @@ extern LoRaNetClass LoRaNet;
 
 class LocalUnit {
   public:
+    LocalUnit();
     LocalUnit(byte unitAddr);
     void process();
 };
 
 class RemoteUnit : public Node {
   public:
+    RemoteUnit();
     RemoteUnit(byte unitAddr);
 };
 
@@ -98,6 +100,7 @@ class RemoteSlave : public RemoteUnit {
     virtual bool _check_cmd_success() = 0;
 
   public:
+    RemoteSlave();
     RemoteSlave(byte unitAddr);
     void process();
     unsigned int stateAge();
@@ -128,6 +131,7 @@ class LocalSlave : public LocalUnit {
     virtual void _process_ios() = 0;
 
   public:
+    LocalSlave();
     LocalSlave(byte unitAddr);
     void process();
     virtual int _get_state_data_len() = 0;
