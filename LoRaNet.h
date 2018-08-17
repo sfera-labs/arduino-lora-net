@@ -28,6 +28,7 @@ class Node {
     float _lora_snr;
 
     byte getAddr();
+    void setAddr(byte unitAddr);
     void send(byte msg_type, byte *data, int data_len);
     int loraRssi();
     float loraSnr();

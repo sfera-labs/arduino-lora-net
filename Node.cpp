@@ -1,7 +1,7 @@
 #include "LoRaNet.h"
 
-Node::Node() {
-  _unit_addr = 0xff; // invalid address
+Node::Node()
+: Node(0xff) {
 }
 
 Node::Node(byte unitAddr) {
@@ -16,6 +16,10 @@ Node::Node(byte unitAddr) {
 
 byte Node::getAddr() {
   return _unit_addr;
+}
+
+void Node::setAddr(byte unitAddr) {
+  _unit_addr = unitAddr;
 }
 
 void Node::send(byte msg_type, byte *data, int data_len) {

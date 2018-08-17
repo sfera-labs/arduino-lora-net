@@ -3,7 +3,7 @@
 RemoteMaster _MASTER_ARRAY[1];
 
 LocalSlave::LocalSlave()
-: LocalUnit() {
+: LocalSlave(0xff) {
 }
 
 LocalSlave::LocalSlave(byte unitAddr)

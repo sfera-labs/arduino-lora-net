@@ -3,7 +3,7 @@
 #define _CMD_REPEAT_DELAY 5000
 
 RemoteSlave::RemoteSlave()
-: RemoteUnit() {
+: RemoteSlave(0xff) {
 }
 
 RemoteSlave::RemoteSlave(byte unitAddr)
