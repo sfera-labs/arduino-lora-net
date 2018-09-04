@@ -12,7 +12,6 @@
 #define _MSG_RST_4 3
 
 LoRaNetClass::LoRaNetClass() {
-  _unit_addr = 0xff;
 }
 
 void LoRaNetClass::init(byte *siteId, int siteIdLen, byte *cryptoKey) {
@@ -22,6 +21,7 @@ void LoRaNetClass::init(byte *siteId, int siteIdLen, byte *cryptoKey) {
   memcpy(_crypto_key, cryptoKey, 16);
   _reset_last = millis();
   _reset_intvl = 0;
+  _nodes_disc_buff_size = 0;
 
   // init random
   LoRa.parsePacket();
@@ -33,13 +33,23 @@ void LoRaNetClass::init(byte *siteId, int siteIdLen, byte *cryptoKey) {
   randomSeed(seed);
 }
 
-void LoRaNetClass::setLocalAddr(int address) {
+void LoRaNetClass::setLocalAddr(byte address) {
   _unit_addr = address;
 }
 
-void LoRaNetClass::setNodes(Node *nodes, int numOfNodes) {
+byte LoRaNetClass::getLocalAddr() {
+  return _unit_addr;
+}
+
+void LoRaNetClass::setNodes(Node **nodes, int numOfNodes) {
   _nodes = nodes;
   _nodes_size = numOfNodes;
+}
+
+void LoRaNetClass::enableDiscovery(Node **buff, int maxSize) {
+  _nodes = buff;
+  _nodes_size = 0;
+  _nodes_disc_buff_size = maxSize;
 }
 
 void LoRaNetClass::process() {
@@ -54,25 +64,25 @@ void LoRaNetClass::_reset() {
     _reset_last = now;
 
     for (int i = 0; i < _nodes_size; i++) {
-      Node &node = _nodes[i];
-      if (node.getAddr() != 0xff &&
-          node._reset_intvl >= 0 &&
-          now - node._reset_last >= node._reset_intvl) {
+      Node *node = _nodes[i];
+      if (node->getAddr() != 0xff &&
+          node->_reset_intvl >= 0 &&
+          now - node->_reset_last >= node->_reset_intvl) {
         Serial.print("_reset ");
-        Serial.println(node.getAddr());
-        node._reset_last = now;
-        node._reset_intvl = node._reset_trial * 5000 + random(5000);
-        if (node._reset_trial < 30) {
-          node._reset_trial++;
+        Serial.println(node->getAddr());
+        node->_reset_last = now;
+        node->_reset_intvl = node->_reset_trial * 5000 + random(5000);
+        if (node->_reset_trial < 30) {
+          node->_reset_trial++;
         }
 
         _reset_intvl = 5000;
 
         for (int i = 0; i < 8; i++) {
-          node._reset_session[i] = random(0x100);
+          node->_reset_session[i] = random(0x100);
         }
 
-        _send_with_session(node, node._reset_session, _MSG_RST_1, NULL, 0);
+        _send_with_session(*node, node->_reset_session, _MSG_RST_1, NULL, 0);
         return;
       }
     }
@@ -187,7 +197,7 @@ void LoRaNetClass::_recv() {
   byte plain[cipher_len];
   _aes.do_aes_decrypt(p + _site_id_len + 2, cipher_len, plain, _crypto_key, 128, iv);
 
-  Serial.println("========");
+  Serial.print("LoRaNetClass::_recv: ");
   for (int i = 0; i < cipher_len; i++) {
     Serial.print(plain[i], HEX);
     Serial.print("(");
@@ -244,10 +254,16 @@ void LoRaNetClass::_recv() {
   if (_unit_addr == to_addr) {
     Node *sender = NULL;
     for (int i = 0; i < _nodes_size; i++) {
-      if (_nodes[i].getAddr() == from_addr) {
-        sender = &_nodes[i];
+      if (_nodes[i]->getAddr() == from_addr) {
+        sender = _nodes[i];
         break;
       }
+    }
+    if (sender == NULL && _nodes_size < _nodes_disc_buff_size) {
+      sender = _nodes[_nodes_size++];
+      sender->setAddr(from_addr);
+      Serial.print("Discovery: ");
+      Serial.println(from_addr);
     }
     if (sender != NULL) {
       sender->_lora_rssi = LoRa.packetRssi();

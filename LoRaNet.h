@@ -41,8 +41,10 @@ class LoRaNetClass {
     LoRaNetClass();
     void init(byte *siteId, int siteIdLen, byte *cryptoKey);
     void process();
-    void setLocalAddr(int address);
-    void setNodes(Node *nodes, int numOfNodes);
+    void setLocalAddr(byte address);
+    byte getLocalAddr();
+    void setNodes(Node **nodes, int numOfNodes);
+    void enableDiscovery(Node **buff, int maxSize);
     bool _send(Node &to, byte msg_type, byte *data, int data_len);
     bool _send_with_session(Node &to, byte *session, byte msg_type, byte *data, int data_len);
 
@@ -52,10 +54,11 @@ class LoRaNetClass {
     byte *_site_id;
     int _site_id_len;
     byte _unit_addr;
-    Node *_nodes;
+    Node **_nodes;
     int _nodes_size;
     unsigned long _reset_last;
     long _reset_intvl;
+    int _nodes_disc_buff_size;
 
     void _recv();
     void _reset();
@@ -77,6 +80,8 @@ class LocalUnit {
   public:
     LocalUnit();
     LocalUnit(byte unitAddr);
+    void setAddr(byte unitAddr);
+    byte getAddr();
     void process();
 };
 
@@ -111,12 +116,13 @@ class RemoteSlave : public RemoteUnit {
 
 class Master : public LocalUnit {
   private:
-    RemoteSlave *_slaves;
+    RemoteSlave **_slaves;
     int _num_of_slaves;
 
   public:
     Master();
-    void setSlaves(RemoteSlave *slaves, int numOfSlaves);
+    void setSlaves(RemoteSlave **slaves, int numOfSlaves);
+    void enableDiscovery(RemoteSlave **buff, int maxSize);
     void process();
 };
 
