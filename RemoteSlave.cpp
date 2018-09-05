@@ -1,6 +1,6 @@
 #include "LoRaNet.h"
 
-#define _CMD_REPEAT_DELAY 5500
+#define _CMD_REPEAT_DELAY 10500
 
 RemoteSlave::RemoteSlave()
 : RemoteSlave(0xff) {
@@ -44,7 +44,7 @@ void RemoteSlave::process() {
     return;
   }
   if (_has_cmds()) {
-    Serial.println("RemoteSlave::process cmd");
+    Serial.println("RemoteSlave::process: sending cmd");
     _send_cmd();
   }
   if (!_check_cmd_success()) {

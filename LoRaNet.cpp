@@ -149,11 +149,15 @@ bool LoRaNetClass::_send_with_session(Node &to, byte *session, byte msg_type, by
   int paded_len = plain_len + N_BLOCK - plain_len % N_BLOCK;
   byte cipher[paded_len];
   _aes.do_aes_encrypt(plain, plain_len, cipher, _crypto_key, 128, iv16);
-  LoRa.beginPacket();
+
+  if (!LoRa.beginPacket()) {
+    Serial.println("Send error: busy or failed");
+    return false;
+  }
   LoRa.write(_site_id, _site_id_len);
   LoRa.write(iv2, 2);
   LoRa.write(cipher, paded_len);
-  LoRa.endPacket();
+  LoRa.endPacket(true);
 
   to._counter_send = (to._counter_send + 1) % 0x10000;
   if (to._counter_send == 0) {
@@ -348,8 +352,6 @@ void LoRaNetClass::_process_reset(Node &sender, byte msg_type, byte *sent_sessio
 
     _send_with_session(sender, sender._reset_session, _MSG_RST_3, NULL, 0);
 
-    memcpy(sender._session, sender._reset_session, 8);
-    sender._session_set = true;
     sender._counter_recv = sent_counter;
 
   } else if (msg_type == _MSG_RST_3) {
@@ -396,6 +398,8 @@ void LoRaNetClass::_process_reset(Node &sender, byte msg_type, byte *sent_sessio
       return;
     }
 
+    memcpy(sender._session, sender._reset_session, 8);
+    sender._session_set = true;
     sender._counter_recv = sent_counter;
 
     memset(sender._reset_session, 0, 8);

@@ -18,11 +18,11 @@ void LocalSlave::process() {
   LocalUnit::process();
   _process_ios();
   if (_has_updates()) {
-    Serial.println("LocalSlave::process update");
+    Serial.println("LocalSlave::process: sending update");
     _send_update();
   }
   if (_REMOTE_MASTER._needs_repetition_or_heartbeat()) {
-    Serial.println("LocalSlave::process repeat");
+    Serial.println("LocalSlave::process: repeat update");
     _send_update();
   }
 }
