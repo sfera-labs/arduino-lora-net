@@ -24,7 +24,7 @@ void RemoteMaster::_on_session_reset() {
 
 void RemoteMaster::_send_update(byte *data, int data_len) {
   Serial.print("RemoteMaster::_send_update: ");
-  for (int i = 0; i < 13; i++) {
+  for (int i = 0; i < data_len; i++) {
     Serial.print(data[i], HEX);
     Serial.print(" ");
   }
@@ -49,6 +49,6 @@ void RemoteMaster::_process_message(byte msg_type, byte *data, int data_len) {
 
 bool RemoteMaster::_needs_repetition_or_heartbeat() {
   return (memcmp(_last_update_ack, _last_update_data, _local_slave->_get_state_data_len()) != 0
-      && (millis() - _last_update_ts) >= 5000)
+      && (millis() - _last_update_ts) >= 4500)
       || (millis() - _last_update_ts) >= _HEARTBEAT_DELAY;
 }

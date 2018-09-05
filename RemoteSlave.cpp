@@ -1,6 +1,6 @@
 #include "LoRaNet.h"
 
-#define _CMD_REPEAT_DELAY 5000
+#define _CMD_REPEAT_DELAY 5500
 
 RemoteSlave::RemoteSlave()
 : RemoteSlave(0xff) {
@@ -26,7 +26,8 @@ void RemoteSlave::_process_message(byte msg_type, byte *data, int data_len) {
     _last_update_ts = millis();
     _last_update_ts_valid = true;
     _update_state(data, data_len);
-    send(_MSG_ACK, data, data_len); // send ack
+    send(_MSG_ACK, data, data_len);
+    // trigger a cmd repeat within 300ms from now if needed
     _last_cmd_ts = millis() - (_CMD_REPEAT_DELAY - 300);
   }
 }
