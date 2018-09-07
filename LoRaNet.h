@@ -45,6 +45,7 @@ class LoRaNetClass {
     byte getLocalAddr();
     void setNodes(Node **nodes, int numOfNodes);
     void enableDiscovery(Node **buff, int maxSize);
+    void setDutyCycle(unsigned long windowSeconds, int permillage);
     bool _send(Node &to, byte msg_type, byte *data, int data_len);
     bool _send_with_session(Node &to, byte *session, byte msg_type, byte *data, int data_len);
 
@@ -59,9 +60,17 @@ class LoRaNetClass {
     unsigned long _reset_last;
     long _reset_intvl;
     int _nodes_disc_buff_size;
+    unsigned long _dc_window;
+    unsigned long _dc_window_start;
+    unsigned long _dc_tx_time_max;
+    unsigned long _dc_tx_time;
+    unsigned long _dc_tx_start;
+    bool _dc_tx_on;
+    bool _dc_exceeded;
 
     void _recv();
     void _reset();
+    void _duty_cycle();
     void _process_message(Node &sender, byte msg_type, byte *sent_session, uint16_t sent_counter, byte *data, int data_len);
     void _process_reset(Node &sender, byte msg_type, byte *sent_session, uint16_t sent_counter, byte *data, int data_len);
 };

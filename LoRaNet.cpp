@@ -22,6 +22,12 @@ void LoRaNetClass::init(byte *siteId, int siteIdLen, byte *cryptoKey) {
   _reset_last = millis();
   _reset_intvl = 0;
   _nodes_disc_buff_size = 0;
+  _dc_window = 600000;
+  _dc_tx_time_max = 60000;
+  _dc_window_start = millis();
+  _dc_tx_time = 0;
+  _dc_tx_on = false;
+  _dc_exceeded = false;
 
   // init random
   LoRa.parsePacket();
@@ -52,9 +58,56 @@ void LoRaNetClass::enableDiscovery(Node **buff, int maxSize) {
   _nodes_disc_buff_size = maxSize;
 }
 
+void LoRaNetClass::setDutyCycle(unsigned long windowSeconds, int permillage) {
+  if (windowSeconds < 10) {
+    windowSeconds = 10;
+  } else if (windowSeconds > 3600) {
+    windowSeconds = 3600;
+  }
+  if (permillage < 1) {
+    permillage = 1;
+  } else if (permillage > 1000) {
+    permillage = 1000;
+  }
+  _dc_window = windowSeconds * 1000;
+  _dc_tx_time_max = _dc_window * permillage / 1000;
+}
+
 void LoRaNetClass::process() {
+  _duty_cycle();
   _reset();
   _recv();
+}
+
+void LoRaNetClass::_duty_cycle() {
+  unsigned long now = millis();
+  if (now - _dc_window_start >= _dc_window) {
+    _dc_window_start = now;
+    _dc_tx_time = 0;
+    _dc_tx_on = false;
+    _dc_exceeded = false;
+    Serial.println("LoRaNetClass::_duty_cycle: new window");
+  }
+  if (_dc_exceeded) {
+    return;
+  }
+  bool tx_on = LoRa.isTransmitting();
+  if (tx_on != _dc_tx_on) {
+    Serial.print("LoRaNetClass::_duty_cycle: tx ");
+    Serial.println(tx_on);
+    _dc_tx_on = tx_on;
+    if (tx_on) {
+      _dc_tx_start = now;
+    } else {
+      _dc_tx_time += now - _dc_tx_start;
+      Serial.print("LoRaNetClass::_duty_cycle: ");
+      Serial.println(_dc_tx_time);
+      if (_dc_tx_time >= _dc_tx_time_max) {
+        _dc_exceeded = true;
+        Serial.println("LoRaNetClass::_duty_cycle: exceeded");
+      }
+    }
+  }
 }
 
 void LoRaNetClass::_reset() {
@@ -149,6 +202,11 @@ bool LoRaNetClass::_send_with_session(Node &to, byte *session, byte msg_type, by
   int paded_len = plain_len + N_BLOCK - plain_len % N_BLOCK;
   byte cipher[paded_len];
   _aes.do_aes_encrypt(plain, plain_len, cipher, _crypto_key, 128, iv16);
+
+  if (_dc_exceeded) {
+    Serial.println("Send error: duty cycle exceeded");
+    return false;
+  }
 
   if (!LoRa.beginPacket()) {
     Serial.println("Send error: busy or failed");
