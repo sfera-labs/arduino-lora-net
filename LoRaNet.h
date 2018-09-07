@@ -29,7 +29,7 @@ class Node {
 
     byte getAddr();
     void setAddr(byte unitAddr);
-    void send(byte msg_type, byte *data, int data_len);
+    bool send(byte msg_type, byte *data, int data_len);
     int loraRssi();
     float loraSnr();
     virtual void _on_session_reset() = 0;
@@ -107,7 +107,8 @@ class RemoteSlave : public RemoteUnit {
     bool _last_update_ts_valid;
     unsigned long _last_update_ts;
     unsigned long _last_cmd_ts;
-    void _send_cmd();
+    int _last_cmd_attempts;
+    bool _send_cmd();
     virtual bool _has_cmds() = 0;
     virtual byte* _get_cmd_data() = 0;
     virtual int _get_cmd_data_len() = 0;
@@ -141,15 +142,14 @@ class RemoteMaster;
 
 class LocalSlave : public LocalUnit {
   private:
-    void _send_update();
-    virtual bool _has_updates() = 0;
-    virtual byte* _get_state_data() = 0;
     virtual void _process_ios() = 0;
 
   public:
     LocalSlave();
     LocalSlave(byte unitAddr);
     void process();
+    virtual bool _has_updates() = 0;
+    virtual byte* _get_state_data() = 0;
     virtual int _get_state_data_len() = 0;
     virtual void _set_state(byte *data, int data_len) = 0;
 };
@@ -159,6 +159,7 @@ class RemoteMaster : public RemoteUnit {
     LocalSlave *_local_slave;
     byte *_last_update_data;
     unsigned long _last_update_ts;
+    int _last_update_attempts;
     byte _last_update_ack[32]; // buffer for ack
 
   public:
@@ -166,8 +167,9 @@ class RemoteMaster : public RemoteUnit {
     void _on_session_reset();
     void _process_message(byte msg_type, byte *data, int data_len);
     void _set_local_slave(LocalSlave *local_slave);
-    bool _needs_repetition_or_heartbeat();
-    void _send_update(byte *data, int data_len);
+    bool _send_update();
+    bool _send_update(byte *data, int data_len);
+    void _process();
 };
 
 #endif

@@ -17,16 +17,5 @@ LocalSlave::LocalSlave(byte unitAddr)
 void LocalSlave::process() {
   LocalUnit::process();
   _process_ios();
-  if (_has_updates()) {
-    Serial.println("LocalSlave::process: sending update");
-    _send_update();
-  }
-  if (_REMOTE_MASTER._needs_repetition_or_heartbeat()) {
-    Serial.println("LocalSlave::process: repeat update");
-    _send_update();
-  }
-}
-
-void LocalSlave::_send_update() {
-  _REMOTE_MASTER._send_update(_get_state_data(), _get_state_data_len());
+  _REMOTE_MASTER._process();
 }

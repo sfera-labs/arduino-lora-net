@@ -2,6 +2,7 @@
 
 #define _HEARTBEAT_DELAY 60000
 #define _UPD_REPEAT_DELAY 9500
+#define _UPD_REPEAT_CHANCES 5
 
 RemoteMaster::RemoteMaster()
 : RemoteUnit(0) {
@@ -21,9 +22,15 @@ void RemoteMaster::_on_session_reset() {
 
   // trigger an update within a second from now
   _last_update_ts = millis() - (_HEARTBEAT_DELAY - 1000);
+  _last_update_attempts = 0;
 }
 
-void RemoteMaster::_send_update(byte *data, int data_len) {
+bool RemoteMaster::_send_update() {
+  return _send_update(_local_slave->_get_state_data(),
+                        _local_slave->_get_state_data_len());
+}
+
+bool RemoteMaster::_send_update(byte *data, int data_len) {
   Serial.print("RemoteMaster::_send_update: ");
   for (int i = 0; i < data_len; i++) {
     Serial.print(data[i], HEX);
@@ -34,7 +41,27 @@ void RemoteMaster::_send_update(byte *data, int data_len) {
   _last_update_data = data;
   _last_update_ts = millis();
 
-  send(_MSG_UPD, data, data_len);
+  return send(_MSG_UPD, data, data_len);
+}
+
+void RemoteMaster::_process() {
+  if (_local_slave->_has_updates()) {
+    Serial.println("RemoteMaster::_process: sending update");
+    _send_update();
+    _last_update_attempts = 0;
+    
+  } else if (millis() - _last_update_ts >= _HEARTBEAT_DELAY) {
+    Serial.println("RemoteMaster::_process: sending heartbeat");
+    _send_update();
+
+  } else if (_last_update_attempts < _UPD_REPEAT_CHANCES
+        && memcmp(_last_update_ack, _last_update_data, _local_slave->_get_state_data_len()) != 0
+        && (millis() - _last_update_ts) >= _UPD_REPEAT_DELAY) {
+    Serial.println("RemoteMaster::_process: repeat update");
+    if (_send_update()) {
+      _last_update_attempts++;
+    }
+  }
 }
 
 void RemoteMaster::_process_message(byte msg_type, byte *data, int data_len) {
@@ -46,10 +73,4 @@ void RemoteMaster::_process_message(byte msg_type, byte *data, int data_len) {
     Serial.println("RemoteMaster::_process_message CMD");
     _local_slave->_set_state(data, data_len);
   }
-}
-
-bool RemoteMaster::_needs_repetition_or_heartbeat() {
-  return (memcmp(_last_update_ack, _last_update_data, _local_slave->_get_state_data_len()) != 0
-      && (millis() - _last_update_ts) >= _UPD_REPEAT_DELAY)
-      || (millis() - _last_update_ts) >= _HEARTBEAT_DELAY;
 }
