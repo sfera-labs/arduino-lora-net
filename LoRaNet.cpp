@@ -82,11 +82,18 @@ void LoRaNetClass::process() {
 void LoRaNetClass::_duty_cycle() {
   unsigned long now = millis();
   if (now - _dc_window_start >= _dc_window) {
-    _dc_window_start = now;
-    _dc_tx_time = 0;
-    _dc_tx_on = false;
-    _dc_exceeded = false;
     Serial.println("LoRaNetClass::_duty_cycle: new window");
+    _dc_window_start = now;
+    _dc_tx_on = false;
+    if (_dc_exceeded) {
+      // make up for extra time in prev window
+      _dc_tx_time -= _dc_tx_time_max;
+      if (_dc_tx_time < _dc_tx_time_max) {
+        _dc_exceeded = false;
+      }
+    } else {
+      _dc_tx_time = 0;
+    }
   }
   if (_dc_exceeded) {
     return;
