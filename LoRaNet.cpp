@@ -82,7 +82,7 @@ void LoRaNetClass::process() {
 void LoRaNetClass::_duty_cycle() {
   unsigned long now = millis();
   if (now - _dc_window_start >= _dc_window) {
-    Serial.println("LoRaNetClass::_duty_cycle: new window");
+    __DEBUGprintln("LoRaNetClass::_duty_cycle: new window");
     _dc_window_start = now;
     _dc_tx_on = false;
     if (_dc_exceeded) {
@@ -100,18 +100,18 @@ void LoRaNetClass::_duty_cycle() {
   }
   bool tx_on = LoRa.isTransmitting();
   if (tx_on != _dc_tx_on) {
-    Serial.print("LoRaNetClass::_duty_cycle: tx ");
-    Serial.println(tx_on);
+    __DEBUGprint("LoRaNetClass::_duty_cycle: tx ");
+    __DEBUGprintln(tx_on);
     _dc_tx_on = tx_on;
     if (tx_on) {
       _dc_tx_start = now;
     } else {
       _dc_tx_time += now - _dc_tx_start;
-      Serial.print("LoRaNetClass::_duty_cycle: ");
-      Serial.println(_dc_tx_time);
+      __DEBUGprint("LoRaNetClass::_duty_cycle: ");
+      __DEBUGprintln(_dc_tx_time);
       if (_dc_tx_time >= _dc_tx_time_max) {
         _dc_exceeded = true;
-        Serial.println("LoRaNetClass::_duty_cycle: exceeded");
+        __DEBUGprintln("LoRaNetClass::_duty_cycle: exceeded");
       }
     }
   }
@@ -128,8 +128,8 @@ void LoRaNetClass::_reset() {
       if (node->getAddr() != 0xff &&
           node->_reset_intvl >= 0 &&
           now - node->_reset_last >= node->_reset_intvl) {
-        Serial.print("_reset ");
-        Serial.println(node->getAddr());
+        __DEBUGprint("_reset ");
+        __DEBUGprintln(node->getAddr());
         node->_reset_last = now;
         node->_reset_intvl = node->_reset_trial * 5000 + random(5000);
         if (node->_reset_trial < 30) {
@@ -153,32 +153,32 @@ void LoRaNetClass::_reset() {
 
 bool LoRaNetClass::_send(Node &to, byte msg_type, byte *data, int data_len) {
   if (!to._session_set) {
-    Serial.println("Send error: no session");
+    __DEBUGprintln("Send error: no session");
     return false;
   }
   return _send_with_session(to, to._session, msg_type, data, data_len);
 }
 
 bool LoRaNetClass::_send_with_session(Node &to, byte *session, byte msg_type, byte *data, int data_len) {
-  Serial.println("_send ====");
+  __DEBUGprintln("_send ====");
 
-  Serial.print("to: ");
-  Serial.print(to.getAddr());
-  Serial.println();
+  __DEBUGprint("to: ");
+  __DEBUGprint(to.getAddr());
+  __DEBUGprintln();
 
-  Serial.print("msg_type: ");
-  Serial.print(msg_type);
-  Serial.println();
+  __DEBUGprint("msg_type: ");
+  __DEBUGprint(msg_type);
+  __DEBUGprintln();
 
-  Serial.print("session: ");
+  __DEBUGprint("session: ");
   for (int i = 0; i < 8; i++) {
-    Serial.print(session[i], HEX);
-    Serial.print(" ");
+    __DEBUGprint(session[i], HEX);
+    __DEBUGprint(" ");
   }
-  Serial.println();
+  __DEBUGprintln();
 
   if (to.getAddr() == 0xff) {
-    Serial.println("Send error: to == 0xff");
+    __DEBUGprintln("Send error: to == 0xff");
     return false;
   }
 
@@ -211,12 +211,12 @@ bool LoRaNetClass::_send_with_session(Node &to, byte *session, byte msg_type, by
   _aes.do_aes_encrypt(plain, plain_len, cipher, _crypto_key, 128, iv16);
 
   if (_dc_exceeded) {
-    Serial.println("Send error: duty cycle exceeded");
+    __DEBUGprintln("Send error: duty cycle exceeded");
     return false;
   }
 
   if (!LoRa.beginPacket()) {
-    Serial.println("Send error: busy or failed");
+    __DEBUGprintln("Send error: busy or failed");
     return false;
   }
   LoRa.write(_site_id, _site_id_len);
@@ -226,7 +226,7 @@ bool LoRaNetClass::_send_with_session(Node &to, byte *session, byte msg_type, by
 
   to._counter_send = (to._counter_send + 1) % 0x10000;
   if (to._counter_send == 0) {
-    Serial.println("Reset after counter overflow");
+    __DEBUGprintln("Reset after counter overflow");
     to._reset_trial = 0;
     to._reset_last = millis();
     to._reset_intvl = 0;
@@ -266,38 +266,38 @@ void LoRaNetClass::_recv() {
   byte plain[cipher_len];
   _aes.do_aes_decrypt(p + _site_id_len + 2, cipher_len, plain, _crypto_key, 128, iv);
 
-  Serial.print("LoRaNetClass::_recv: ");
+  __DEBUGprint("LoRaNetClass::_recv: ");
   for (int i = 0; i < cipher_len; i++) {
-    Serial.print(plain[i], HEX);
-    Serial.print("(");
-    Serial.print((char) plain[i]);
-    Serial.print(") ");
+    __DEBUGprint(plain[i], HEX);
+    __DEBUGprint("(");
+    __DEBUGprint((char) plain[i]);
+    __DEBUGprint(") ");
   }
-  Serial.println();
+  __DEBUGprintln();
 
   byte to_addr = plain[0];
   byte from_addr = plain[1];
 
-  Serial.print("to_addr: ");
-  Serial.print(to_addr);
-  Serial.println();
+  __DEBUGprint("to_addr: ");
+  __DEBUGprint(to_addr);
+  __DEBUGprintln();
 
-  Serial.print("from_addr: ");
-  Serial.print(from_addr);
-  Serial.println();
+  __DEBUGprint("from_addr: ");
+  __DEBUGprint(from_addr);
+  __DEBUGprintln();
 
   if (from_addr == (byte) 0xff) {
-    Serial.println("Error: from == 0xff");
+    __DEBUGprintln("Error: from == 0xff");
     return;
   }
 
   if (to_addr == (byte) 0xff) {
-    Serial.println("Error: to == 0xff");
+    __DEBUGprintln("Error: to == 0xff");
     return;
   }
 
   if (from_addr == to_addr) {
-    Serial.println("Error: from == to");
+    __DEBUGprintln("Error: from == to");
     return;
   }
 
@@ -316,7 +316,7 @@ void LoRaNetClass::_recv() {
   byte crc[2];
   CRC.crc16(plain, 14 + data_len, crc);
   if (plain[14 + data_len] != crc[0] || plain[14 + data_len + 1] != crc[1]) {
-    Serial.println("Error: crc");
+    __DEBUGprintln("Error: crc");
     return;
   }
 
@@ -331,8 +331,8 @@ void LoRaNetClass::_recv() {
     if (sender == NULL && _nodes_size < _nodes_disc_buff_size) {
       sender = _nodes[_nodes_size++];
       sender->setAddr(from_addr);
-      Serial.print("Discovery: ");
-      Serial.println(from_addr);
+      __DEBUGprint("Discovery: ");
+      __DEBUGprintln(from_addr);
     }
     if (sender != NULL) {
       sender->_lora_rssi = LoRa.packetRssi();
@@ -343,35 +343,35 @@ void LoRaNetClass::_recv() {
 }
 
 void LoRaNetClass::_process_message(Node &sender, byte msg_type, byte *sent_session, uint16_t sent_counter, byte *data, int data_len) {
-  Serial.println("_process_message ====");
+  __DEBUGprintln("_process_message ====");
 
-  Serial.print("sender: ");
-  Serial.print(sender.getAddr());
-  Serial.println();
+  __DEBUGprint("sender: ");
+  __DEBUGprint(sender.getAddr());
+  __DEBUGprintln();
 
-  Serial.print("msg_type: ");
-  Serial.print(msg_type);
-  Serial.println();
+  __DEBUGprint("msg_type: ");
+  __DEBUGprint(msg_type);
+  __DEBUGprintln();
 
-  Serial.print("sent_session: ");
+  __DEBUGprint("sent_session: ");
   for (int i = 0; i < 8; i++) {
-    Serial.print(sent_session[i], HEX);
-    Serial.print(" ");
+    __DEBUGprint(sent_session[i], HEX);
+    __DEBUGprint(" ");
   }
-  Serial.println();
+  __DEBUGprintln();
 
-  Serial.print("sent_counter: ");
-  Serial.print(sent_counter);
-  Serial.println();
+  __DEBUGprint("sent_counter: ");
+  __DEBUGprint(sent_counter);
+  __DEBUGprintln();
 
-  Serial.print("data: ");
+  __DEBUGprint("data: ");
   for (int i = 0; i < data_len; i++) {
-    Serial.print(data[i], HEX);
-    Serial.print("(");
-    Serial.print((char) data[i]);
-    Serial.print(") ");
+    __DEBUGprint(data[i], HEX);
+    __DEBUGprint("(");
+    __DEBUGprint((char) data[i]);
+    __DEBUGprint(") ");
   }
-  Serial.println();
+  __DEBUGprintln();
 
   if (msg_type <= _MSG_RST_4) {
     _process_reset(sender, msg_type, sent_session, sent_counter, data, data_len);
@@ -385,7 +385,7 @@ void LoRaNetClass::_process_message(Node &sender, byte msg_type, byte *sent_sess
 
 void LoRaNetClass::_process_reset(Node &sender, byte msg_type, byte *sent_session, uint16_t sent_counter, byte *data, int data_len) {
   if (msg_type == _MSG_RST_1) {
-    Serial.println("RST 1");
+    __DEBUGprintln("RST 1");
 
     uint16_t counter_challenge = (sender._counter_recv + 1) % 0x10000;
     if (counter_challenge > 0xfffa) {
@@ -400,15 +400,15 @@ void LoRaNetClass::_process_reset(Node &sender, byte msg_type, byte *sent_sessio
     _send_with_session(sender, sender._reset_session, _MSG_RST_2, counter_challenge_bytes, 2);
 
   } else if (msg_type == _MSG_RST_2) {
-    Serial.println("RST 2");
+    __DEBUGprintln("RST 2");
 
     if (memcmp(sender._reset_session, sent_session, 8) != 0) {
-      Serial.println("RST 2 error: session");
+      __DEBUGprintln("RST 2 error: session");
       return;
     }
 
     if ((uint16_t) (sender._counter_recv + 1) > sent_counter) {
-      Serial.println("RST 2 error: counter");
+      __DEBUGprintln("RST 2 error: counter");
       return;
     }
 
@@ -420,10 +420,10 @@ void LoRaNetClass::_process_reset(Node &sender, byte msg_type, byte *sent_sessio
     sender._counter_recv = sent_counter;
 
   } else if (msg_type == _MSG_RST_3) {
-    Serial.println("RST 3");
+    __DEBUGprintln("RST 3");
 
     if (memcmp(sender._reset_session, sent_session, 8) != 0) {
-      Serial.println("RST 3 error: session");
+      __DEBUGprintln("RST 3 error: session");
       return;
     }
 
@@ -433,7 +433,7 @@ void LoRaNetClass::_process_reset(Node &sender, byte msg_type, byte *sent_sessio
     }
 
     if (sent_counter != counter_challenge) {
-      Serial.println("RST 3 error: counter");
+      __DEBUGprintln("RST 3 error: counter");
       return;
     }
 
@@ -448,18 +448,18 @@ void LoRaNetClass::_process_reset(Node &sender, byte msg_type, byte *sent_sessio
 
     sender._on_session_reset();
 
-    Serial.println("RST DONE!");
+    __DEBUGprintln("RST DONE!");
 
   } else if (msg_type == _MSG_RST_4) {
-    Serial.println("RST 4");
+    __DEBUGprintln("RST 4");
 
     if (memcmp(sender._reset_session, sent_session, 8) != 0) {
-      Serial.println("RST 4 error: session");
+      __DEBUGprintln("RST 4 error: session");
       return;
     }
 
     if (sender._counter_recv >= sent_counter) {
-      Serial.println("RST 4 error: counter");
+      __DEBUGprintln("RST 4 error: counter");
       return;
     }
 
@@ -472,7 +472,7 @@ void LoRaNetClass::_process_reset(Node &sender, byte msg_type, byte *sent_sessio
 
     sender._on_session_reset();
 
-    Serial.println("RST DONE!");
+    __DEBUGprintln("RST DONE!");
 
     _reset_last = millis();
     _reset_intvl = 1000;

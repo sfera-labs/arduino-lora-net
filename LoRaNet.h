@@ -4,6 +4,16 @@
 #include <Arduino.h>
 #include "AES.h"
 
+//#define __SL_DEBUG 1
+
+#ifdef __SL_DEBUG
+#define __DEBUGprint(...) Serial.print(__VA_ARGS__)
+#define __DEBUGprintln(...) Serial.println(__VA_ARGS__)
+#else
+#define __DEBUGprint(...)
+#define __DEBUGprintln(...)
+#endif
+
 /*******************************************************************************
 /** Network layer
 /******************************************************************************/

@@ -17,14 +17,14 @@ void RemoteSlave::_on_session_reset() {
 }
 
 bool RemoteSlave::_send_cmd() {
-  Serial.println("RemoteSlave::_send_cmd");
+  __DEBUGprintln("RemoteSlave::_send_cmd");
   _last_cmd_ts = millis();
   return send(_MSG_CMD, _get_cmd_data(), _get_cmd_data_len());
 }
 
 void RemoteSlave::_process_message(byte msg_type, byte *data, int data_len) {
   if (msg_type == _MSG_UPD) {
-    Serial.println("RemoteSlave::_process_message UPD");
+    __DEBUGprintln("RemoteSlave::_process_message UPD");
     _last_update_ts = millis();
     _last_update_ts_valid = true;
     _update_state(data, data_len);
@@ -47,13 +47,13 @@ void RemoteSlave::process() {
     return;
   }
   if (_has_cmds()) {
-    Serial.println("RemoteSlave::process sending cmd");
+    __DEBUGprintln("RemoteSlave::process sending cmd");
     _send_cmd();
     _last_cmd_attempts = 0;
   }
   if (_last_cmd_attempts < _CMD_REPEAT_CHANCES && !_check_cmd_success()) {
     if (millis() - _last_cmd_ts >= _CMD_REPEAT_DELAY) {
-      Serial.println("RemoteSlave::process repeat cmd");
+      __DEBUGprintln("RemoteSlave::process repeat cmd");
       if (_send_cmd()) {
         _last_cmd_attempts++;
       }
