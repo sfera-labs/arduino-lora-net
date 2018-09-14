@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include "AES.h"
 
-//#define __SL_DEBUG 1
+// #define __SL_DEBUG 1
 
 #ifdef __SL_DEBUG
 #define __DEBUGprint(...) Serial.print(__VA_ARGS__)
@@ -128,7 +128,7 @@ class RemoteSlave : public RemoteUnit {
   public:
     RemoteSlave();
     RemoteSlave(byte unitAddr);
-    void process();
+    bool process();
     unsigned int stateAge();
     void _on_session_reset();
     void _process_message(byte msg_type, byte *data, int data_len);
@@ -138,6 +138,7 @@ class Master : public LocalUnit {
   private:
     RemoteSlave **_slaves;
     int _num_of_slaves;
+    int _process_idx;
 
   public:
     Master();

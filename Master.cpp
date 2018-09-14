@@ -2,6 +2,8 @@
 
 Master::Master()
 : LocalUnit(0) {
+  _process_idx = 0;
+  _num_of_slaves = 0;
 }
 
 void Master::setSlaves(RemoteSlave **slaves, int numOfSlaves) {
@@ -18,7 +20,11 @@ void Master::enableDiscovery(RemoteSlave **buff, int maxSize) {
 
 void Master::process() {
   LocalUnit::process();
-  for (int i = 0; i < _num_of_slaves; i++) {
-    _slaves[i]->process();
+  if (_process_idx < _num_of_slaves) {
+    if (_slaves[_process_idx]->process()) {
+      _process_idx++;
+    }
+  } else {
+    _process_idx = 0;
   }
 }

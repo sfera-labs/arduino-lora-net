@@ -219,6 +219,7 @@ bool LoRaNetClass::_send_with_session(Node &to, byte *session, byte msg_type, by
     __DEBUGprintln("Send error: busy or failed");
     return false;
   }
+  delay(10);
   LoRa.write(_site_id, _site_id_len);
   LoRa.write(iv2, 2);
   LoRa.write(cipher, paded_len);
