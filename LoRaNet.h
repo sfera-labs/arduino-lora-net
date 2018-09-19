@@ -69,6 +69,7 @@ class LoRaNetClass {
     int _nodes_size;
     unsigned long _reset_last;
     long _reset_intvl;
+    int _reset_idx;
     int _nodes_disc_buff_size;
     unsigned long _dc_window;
     unsigned long _dc_window_start;

@@ -21,6 +21,7 @@ void LoRaNetClass::init(byte *siteId, int siteIdLen, byte *cryptoKey) {
   memcpy(_crypto_key, cryptoKey, 16);
   _reset_last = millis();
   _reset_intvl = 0;
+  _reset_idx = 0;
   _nodes_disc_buff_size = 0;
   _dc_window = 600000;
   _dc_tx_time_max = 60000;
@@ -119,12 +120,10 @@ void LoRaNetClass::_duty_cycle() {
 
 void LoRaNetClass::_reset() {
   unsigned long now = millis();
-
   if (now - _reset_last >= _reset_intvl) {
-    _reset_last = now;
-
-    for (int i = 0; i < _nodes_size; i++) {
-      Node *node = _nodes[i];
+    _reset_intvl = 2000;
+    if (_reset_idx < _nodes_size) {
+      Node *node = _nodes[_reset_idx];
       if (node->getAddr() != 0xff &&
           node->_reset_intvl >= 0 &&
           now - node->_reset_last >= node->_reset_intvl) {
@@ -135,19 +134,18 @@ void LoRaNetClass::_reset() {
         if (node->_reset_trial < 30) {
           node->_reset_trial++;
         }
-
+        _reset_last = now;
         _reset_intvl = 5000;
-
         for (int i = 0; i < 8; i++) {
           node->_reset_session[i] = random(0x100);
         }
-
         _send_with_session(*node, node->_reset_session, _MSG_RST_1, NULL, 0);
-        return;
       }
+      _reset_idx++;
+    } else {
+      _reset_idx = 0;
+      _reset_last = now;
     }
-
-    _reset_intvl = 2000;
   }
 }
 
