@@ -18,13 +18,13 @@
 /** Network layer
 /******************************************************************************/
 
-class Node {
+class LoRaNode {
   private:
     byte _unit_addr;
 
   public:
-    Node();
-    Node(byte unitAddr);
+    LoRaNode();
+    LoRaNode(byte unitAddr);
 
     byte _session[8];
     bool _session_set;
@@ -53,11 +53,11 @@ class LoRaNetClass {
     void process();
     void setLocalAddr(byte address);
     byte getLocalAddr();
-    void setNodes(Node **nodes, int numOfNodes);
-    void enableDiscovery(Node **buff, int maxSize);
+    void setNodes(LoRaNode **nodes, int numOfNodes);
+    void enableDiscovery(LoRaNode **buff, int maxSize);
     void setDutyCycle(unsigned long windowSeconds, int permillage);
-    bool _send(Node &to, byte msg_type, byte *data, int data_len);
-    bool _send_with_session(Node &to, byte *session, byte msg_type, byte *data, int data_len);
+    bool _send(LoRaNode &to, byte msg_type, byte *data, int data_len);
+    bool _send_with_session(LoRaNode &to, byte *session, byte msg_type, byte *data, int data_len);
 
   private:
     AES _aes;
@@ -65,7 +65,7 @@ class LoRaNetClass {
     byte *_site_id;
     int _site_id_len;
     byte _unit_addr;
-    Node **_nodes;
+    LoRaNode **_nodes;
     int _nodes_size;
     unsigned long _reset_last;
     long _reset_intvl;
@@ -82,8 +82,8 @@ class LoRaNetClass {
     void _recv();
     void _reset();
     void _duty_cycle();
-    void _process_message(Node &sender, byte msg_type, byte *sent_session, uint16_t sent_counter, byte *data, int data_len);
-    void _process_reset(Node &sender, byte msg_type, byte *sent_session, uint16_t sent_counter, byte *data, int data_len);
+    void _process_message(LoRaNode &sender, byte msg_type, byte *sent_session, uint16_t sent_counter, byte *data, int data_len);
+    void _process_reset(LoRaNode &sender, byte msg_type, byte *sent_session, uint16_t sent_counter, byte *data, int data_len);
 };
 
 extern LoRaNetClass LoRaNet;
@@ -96,24 +96,24 @@ extern LoRaNetClass LoRaNet;
 #define _MSG_CMD 11
 #define _MSG_ACK 12
 
-class LocalUnit {
+class LoRaLocalUnit {
   public:
-    LocalUnit();
-    LocalUnit(byte unitAddr);
+    LoRaLocalUnit();
+    LoRaLocalUnit(byte unitAddr);
     void setAddr(byte unitAddr);
     byte getAddr();
     void process();
 };
 
-class RemoteUnit : public Node {
+class LoRaRemoteUnit : public LoRaNode {
   public:
-    RemoteUnit();
-    RemoteUnit(byte unitAddr);
+    LoRaRemoteUnit();
+    LoRaRemoteUnit(byte unitAddr);
 };
 
 /**** Master side ****/
 
-class RemoteSlave : public RemoteUnit {
+class LoRaRemoteSlave : public LoRaRemoteUnit {
   private:
     bool _last_update_ts_valid;
     unsigned long _last_update_ts;
@@ -127,38 +127,38 @@ class RemoteSlave : public RemoteUnit {
     virtual bool _check_cmd_success() = 0;
 
   public:
-    RemoteSlave();
-    RemoteSlave(byte unitAddr);
+    LoRaRemoteSlave();
+    LoRaRemoteSlave(byte unitAddr);
     bool process();
     unsigned int stateAge();
     void _on_session_reset();
     void _process_message(byte msg_type, byte *data, int data_len);
 };
 
-class Master : public LocalUnit {
+class LoRaLocalMaster : public LoRaLocalUnit {
   private:
-    RemoteSlave **_slaves;
+    LoRaRemoteSlave **_slaves;
     int _num_of_slaves;
     int _process_idx;
 
   public:
-    Master();
-    void setSlaves(RemoteSlave **slaves, int numOfSlaves);
-    void enableDiscovery(RemoteSlave **buff, int maxSize);
+    LoRaLocalMaster();
+    void setSlaves(LoRaRemoteSlave **slaves, int numOfSlaves);
+    void enableDiscovery(LoRaRemoteSlave **buff, int maxSize);
     void process();
 };
 
 /**** Slave side ****/
 
-class RemoteMaster;
+class LoRaRemoteMaster;
 
-class LocalSlave : public LocalUnit {
+class LoRaLocalSlave : public LoRaLocalUnit {
   private:
     virtual void _process_ios() = 0;
 
   public:
-    LocalSlave();
-    LocalSlave(byte unitAddr);
+    LoRaLocalSlave();
+    LoRaLocalSlave(byte unitAddr);
     void process();
     virtual bool _has_updates() = 0;
     virtual byte* _get_state_data() = 0;
@@ -166,19 +166,19 @@ class LocalSlave : public LocalUnit {
     virtual void _set_state(byte *data, int data_len) = 0;
 };
 
-class RemoteMaster : public RemoteUnit {
+class LoRaRemoteMaster : public LoRaRemoteUnit {
   private:
-    LocalSlave *_local_slave;
+    LoRaLocalSlave *_local_slave;
     byte *_last_update_data;
     unsigned long _last_update_ts;
     int _last_update_attempts;
     byte _last_update_ack[32]; // buffer for ack
 
   public:
-    RemoteMaster();
+    LoRaRemoteMaster();
     void _on_session_reset();
     void _process_message(byte msg_type, byte *data, int data_len);
-    void _set_local_slave(LocalSlave *local_slave);
+    void _set_local_slave(LoRaLocalSlave *local_slave);
     bool _send_update();
     bool _send_update(byte *data, int data_len);
     void _process();

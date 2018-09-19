@@ -48,12 +48,12 @@ byte LoRaNetClass::getLocalAddr() {
   return _unit_addr;
 }
 
-void LoRaNetClass::setNodes(Node **nodes, int numOfNodes) {
+void LoRaNetClass::setNodes(LoRaNode **nodes, int numOfNodes) {
   _nodes = nodes;
   _nodes_size = numOfNodes;
 }
 
-void LoRaNetClass::enableDiscovery(Node **buff, int maxSize) {
+void LoRaNetClass::enableDiscovery(LoRaNode **buff, int maxSize) {
   _nodes = buff;
   _nodes_size = 0;
   _nodes_disc_buff_size = maxSize;
@@ -123,7 +123,7 @@ void LoRaNetClass::_reset() {
   if (now - _reset_last >= _reset_intvl) {
     _reset_intvl = 2000;
     if (_reset_idx < _nodes_size) {
-      Node *node = _nodes[_reset_idx];
+      LoRaNode *node = _nodes[_reset_idx];
       if (node->getAddr() != 0xff &&
           node->_reset_intvl >= 0 &&
           now - node->_reset_last >= node->_reset_intvl) {
@@ -149,7 +149,7 @@ void LoRaNetClass::_reset() {
   }
 }
 
-bool LoRaNetClass::_send(Node &to, byte msg_type, byte *data, int data_len) {
+bool LoRaNetClass::_send(LoRaNode &to, byte msg_type, byte *data, int data_len) {
   if (!to._session_set) {
     __DEBUGprintln("Send error: no session");
     return false;
@@ -157,7 +157,7 @@ bool LoRaNetClass::_send(Node &to, byte msg_type, byte *data, int data_len) {
   return _send_with_session(to, to._session, msg_type, data, data_len);
 }
 
-bool LoRaNetClass::_send_with_session(Node &to, byte *session, byte msg_type, byte *data, int data_len) {
+bool LoRaNetClass::_send_with_session(LoRaNode &to, byte *session, byte msg_type, byte *data, int data_len) {
   __DEBUGprintln("_send ====");
 
   __DEBUGprint("to: ");
@@ -320,7 +320,7 @@ void LoRaNetClass::_recv() {
   }
 
   if (_unit_addr == to_addr) {
-    Node *sender = NULL;
+    LoRaNode *sender = NULL;
     for (int i = 0; i < _nodes_size; i++) {
       if (_nodes[i]->getAddr() == from_addr) {
         sender = _nodes[i];
@@ -341,7 +341,7 @@ void LoRaNetClass::_recv() {
   }
 }
 
-void LoRaNetClass::_process_message(Node &sender, byte msg_type, byte *sent_session, uint16_t sent_counter, byte *data, int data_len) {
+void LoRaNetClass::_process_message(LoRaNode &sender, byte msg_type, byte *sent_session, uint16_t sent_counter, byte *data, int data_len) {
   __DEBUGprintln("_process_message ====");
 
   __DEBUGprint("sender: ");
@@ -382,7 +382,7 @@ void LoRaNetClass::_process_message(Node &sender, byte msg_type, byte *sent_sess
   }
 }
 
-void LoRaNetClass::_process_reset(Node &sender, byte msg_type, byte *sent_session, uint16_t sent_counter, byte *data, int data_len) {
+void LoRaNetClass::_process_reset(LoRaNode &sender, byte msg_type, byte *sent_session, uint16_t sent_counter, byte *data, int data_len) {
   if (msg_type == _MSG_RST_1) {
     __DEBUGprintln("RST 1");
 

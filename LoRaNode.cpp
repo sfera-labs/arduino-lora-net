@@ -1,10 +1,10 @@
 #include "LoRaNet.h"
 
-Node::Node()
-: Node(0xff) {
+LoRaNode::LoRaNode()
+: LoRaNode(0xff) {
 }
 
-Node::Node(byte unitAddr) {
+LoRaNode::LoRaNode(byte unitAddr) {
   _unit_addr = unitAddr;
   _session_set = false;
   _counter_send = 0;
@@ -14,22 +14,22 @@ Node::Node(byte unitAddr) {
   _reset_intvl = 0;
 }
 
-byte Node::getAddr() {
+byte LoRaNode::getAddr() {
   return _unit_addr;
 }
 
-void Node::setAddr(byte unitAddr) {
+void LoRaNode::setAddr(byte unitAddr) {
   _unit_addr = unitAddr;
 }
 
-bool Node::send(byte msg_type, byte *data, int data_len) {
+bool LoRaNode::send(byte msg_type, byte *data, int data_len) {
   return LoRaNet._send(*this, msg_type, data, data_len);
 }
 
-int Node::loraRssi() {
+int LoRaNode::loraRssi() {
   return _lora_rssi;
 }
 
-float Node::loraSnr() {
+float LoRaNode::loraSnr() {
   return _lora_snr;
 }
