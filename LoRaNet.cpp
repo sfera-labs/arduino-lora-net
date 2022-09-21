@@ -239,6 +239,8 @@ void LoRaNetClass::_recv() {
     return;
   }
 
+  __DEBUGprintln("LoRaNetClass::_recv: receiving...");
+
   byte p[128];
   int bytes = 0;
   while (LoRa.available()) {
@@ -248,11 +250,13 @@ void LoRaNetClass::_recv() {
   int cipher_len = bytes - _site_id_len - 2;
 
   if (cipher_len < 15) {
+    __DEBUGprintln("LoRaNetClass::_recv: short cipher");
     return;
   }
 
   for (int i = 0; i < _site_id_len; i++) {
     if (p[i] != _site_id[i]) {
+      __DEBUGprintln("LoRaNetClass::_recv: site ID mismatch");
       return;
     }
   }
