@@ -20,7 +20,7 @@ This library depends on the [arduino-LoRa library](https://github.com/sfera-labs
 
 Implementations of LoRaNet shall extend the classes `LoRaLocalSlave` and `LoRaRemoteSlave`.
 
-For an example of implementation and usage see [IonoLoRaNet](https://github.com/sfera-labs/iono/tree/master/IonoLoRaNet) which implements LoRaNet for [Iono MKR](https://www.sferalabs.cc/iono-mkr/).
+For an example of implementation and usage see [iono-mkr-lora-net](https://github.com/sfera-labs/iono-mkr-lora-net/) which implements LoRaNet for [Iono MKR](https://www.sferalabs.cc/product/iono-mkr/).
 
 ## Protocol details
 
